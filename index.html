@@ -3,7 +3,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Jarvis v2</title>
+  <title>Jarvis v2.5</title>
 
   <style>
     body {
@@ -38,9 +38,9 @@
     }
 
     @keyframes pulse {
-      0% { transform: scale(1); box-shadow: 0 0 20px #00d4ff; }
-      50% { transform: scale(1.15); box-shadow: 0 0 70px #00d4ff; }
-      100% { transform: scale(1); box-shadow: 0 0 20px #00d4ff; }
+      0% { transform: scale(1); }
+      50% { transform: scale(1.15); }
+      100% { transform: scale(1); }
     }
 
     .log {
@@ -48,8 +48,7 @@
       font-size: 16px;
       opacity: 0.7;
       max-width: 600px;
-      margin-left: auto;
-      margin-right: auto;
+      margin: auto;
     }
   </style>
 
@@ -73,26 +72,38 @@ recognition.continuous = true;
 recognition.lang = "en-US";
 
 let activated = false;
+let lastTranscript = "";
+let lastTime = 0;
 
-// 🎤 Start recognition
+// 🎤 Start
 recognition.onstart = () => {
   status.innerText = "Jarvis is online...";
 };
 
+// 🎧 Listen
 recognition.onresult = (event) => {
-  const transcript = event.results[event.results.length - 1][0].transcript.toLowerCase();
+  let transcript = event.results[event.results.length - 1][0].transcript.toLowerCase().trim();
+
+  // 🚫 IGNORE duplicates (super important fix)
+  const now = Date.now();
+  if (transcript === lastTranscript && (now - lastTime) < 2000) return;
+
+  lastTranscript = transcript;
+  lastTime = now;
 
   log.innerHTML = "<p>You: " + transcript + "</p>";
 
-  // Wake word
-  if (transcript.includes("hey jarvis")) {
+  console.log("Heard:", transcript);
+
+  // 🔑 Wake word
+  if (!activated && transcript.includes("hey jarvis")) {
     activated = true;
-    speak("Yes, sir.");
+    speak("Yes.");
     status.innerText = "Listening...";
     return;
   }
 
-  // Command mode
+  // 🎯 Command mode
   if (activated) {
     handleCommand(transcript);
     activated = false;
@@ -100,101 +111,91 @@ recognition.onresult = (event) => {
   }
 };
 
+// 🔁 Restart if stopped
+recognition.onend = () => recognition.start();
+
 recognition.onerror = (event) => {
   console.error("Error:", event.error);
 };
 
-// 🔁 Restart if it stops
-recognition.onend = () => {
-  recognition.start();
-};
-
 recognition.start();
 
-// 🧠 Command handler
+// 🧠 COMMAND SYSTEM
 function handleCommand(command) {
 
-  // OPEN WEBSITES
-  if (command.includes("open youtube")) {
+  // CLEAN command
+  command = command.replace("hey jarvis", "").trim();
+
+  // 🌐 OPEN SITES
+  if (command.includes("youtube")) {
     speak("Opening YouTube.");
     window.open("https://www.youtube.com", "_blank");
   }
 
-  else if (command.includes("open google")) {
+  else if (command.includes("google")) {
     speak("Opening Google.");
     window.open("https://www.google.com", "_blank");
   }
 
-  else if (command.includes("open spotify")) {
+  else if (command.includes("spotify")) {
     speak("Opening Spotify.");
     window.open("https://open.spotify.com", "_blank");
   }
 
-  // TIME
+  // ⏰ TIME
   else if (command.includes("time")) {
     const time = new Date().toLocaleTimeString();
     speak("The time is " + time);
   }
 
-  // DATE
+  // 📅 DATE
   else if (command.includes("date")) {
     const date = new Date().toLocaleDateString();
     speak("Today is " + date);
   }
 
-  // GREETINGS
+  // 💬 SMALL TALK
   else if (command.includes("how are you")) {
-    speak("I am operating at full capacity, sir.");
+    speak("I am fully operational, sir.");
   }
 
   else if (command.includes("who are you")) {
     speak("I am Jarvis, your personal assistant.");
   }
 
-  // FALLBACK AI
+  // 🧠 FALLBACK
   else {
-    speak(getAIResponse(command));
+    speak(smartResponse(command));
   }
 }
 
-// 🤖 Simple AI brain
-function getAIResponse(input) {
+// 🤖 SMART RESPONSE
+function smartResponse(input) {
 
-  if (input.includes("hello")) {
-    return "Hello, sir.";
-  }
+  if (input.includes("hello")) return "Hello, sir.";
+  if (input.includes("help")) return "Try saying open YouTube or ask for the time.";
 
-  if (input.includes("your name")) {
-    return "My name is Jarvis.";
-  }
-
-  if (input.includes("help")) {
-    return "I can open websites and answer simple questions.";
-  }
-
-  return "I am still learning, sir.";
+  return "I did not understand that command.";
 }
 
-// 🔊 Voice system
+// 🔊 VOICE
 function speak(text) {
   const speech = new SpeechSynthesisUtterance(text);
 
-  const voices = window.speechSynthesis.getVoices();
+  const voices = speechSynthesis.getVoices();
 
-  // Prøv å finne en mer "Jarvis" stemme
-  const preferredVoice =
+  const jarvisVoice =
     voices.find(v => v.name.includes("Google UK English Male")) ||
     voices.find(v => v.lang === "en-GB") ||
     voices[0];
 
-  if (preferredVoice) {
-    speech.voice = preferredVoice;
-  }
+  if (jarvisVoice) speech.voice = jarvisVoice;
 
   speech.pitch = 0.85;
   speech.rate = 0.95;
 
-  window.speechSynthesis.speak(speech);
+  speechSynthesis.cancel(); // 🧠 STOP overlap (important fix)
+  speechSynthesis.speak(speech);
 }
 </script>
 
