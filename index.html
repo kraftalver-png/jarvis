@@ -3,92 +3,200 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Jarvis</title>
+  <title>Jarvis v2</title>
+
   <style>
     body {
-      background: radial-gradient(circle, #001f3f, #000814);
+      margin: 0;
+      background: radial-gradient(circle at center, #001f3f, #000814);
       color: #00d4ff;
       font-family: Arial, sans-serif;
       text-align: center;
-      padding-top: 100px;
     }
 
-```
-h1 {
-  font-size: 50px;
-  text-shadow: 0 0 20px #00d4ff;
-}
+    h1 {
+      margin-top: 80px;
+      font-size: 60px;
+      letter-spacing: 5px;
+      text-shadow: 0 0 25px #00d4ff;
+    }
 
-#status {
-  margin-top: 20px;
-  font-size: 20px;
-  opacity: 0.8;
-}
+    #status {
+      margin-top: 20px;
+      font-size: 20px;
+      opacity: 0.8;
+    }
 
-.circle {
-  width: 200px;
-  height: 200px;
-  border: 4px solid #00d4ff;
-  border-radius: 50%;
-  margin: 50px auto;
-  box-shadow: 0 0 40px #00d4ff;
-  animation: pulse 2s infinite;
-}
+    .circle {
+      width: 220px;
+      height: 220px;
+      border: 4px solid #00d4ff;
+      border-radius: 50%;
+      margin: 60px auto;
+      box-shadow: 0 0 50px #00d4ff;
+      animation: pulse 2s infinite;
+    }
 
-@keyframes pulse {
-  0% { transform: scale(1); box-shadow: 0 0 20px #00d4ff; }
-  50% { transform: scale(1.1); box-shadow: 0 0 60px #00d4ff; }
-  100% { transform: scale(1); box-shadow: 0 0 20px #00d4ff; }
-}
-```
+    @keyframes pulse {
+      0% { transform: scale(1); box-shadow: 0 0 20px #00d4ff; }
+      50% { transform: scale(1.15); box-shadow: 0 0 70px #00d4ff; }
+      100% { transform: scale(1); box-shadow: 0 0 20px #00d4ff; }
+    }
 
+    .log {
+      margin-top: 30px;
+      font-size: 16px;
+      opacity: 0.7;
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
+    }
   </style>
+
 </head>
+
 <body>
 
-  <h1>JARVIS</h1>
-  <div class="circle"></div>
-  <div id="status">Listening...</div>
+<h1>JARVIS</h1>
+<div class="circle"></div>
+<div id="status">Waiting for "Hey Jarvis"...</div>
+<div class="log" id="log"></div>
 
-  <script>
-    const status = document.getElementById("status");
+<script>
+const status = document.getElementById("status");
+const log = document.getElementById("log");
 
-    // Speech Recognition
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    const recognition = new SpeechRecognition();
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+const recognition = new SpeechRecognition();
 
-    recognition.continuous = true;
-    recognition.lang = "en-US";
+recognition.continuous = true;
+recognition.lang = "en-US";
 
-    recognition.onstart = () => {
-      status.innerText = "Jarvis is listening...";
-    };
+let activated = false;
 
-    recognition.onresult = (event) => {
-      const transcript = event.results[event.results.length - 1][0].transcript.toLowerCase();
-      console.log("Heard:", transcript);
+// 🎤 Start recognition
+recognition.onstart = () => {
+  status.innerText = "Jarvis is online...";
+};
 
-      if (transcript.includes("hey jarvis")) {
-        speak("At your service, sir.");
-      }
-    };
+recognition.onresult = (event) => {
+  const transcript = event.results[event.results.length - 1][0].transcript.toLowerCase();
 
-    recognition.onerror = (event) => {
-      console.error(event.error);
-    };
+  log.innerHTML = "<p>You: " + transcript + "</p>";
 
-    recognition.start();
+  // Wake word
+  if (transcript.includes("hey jarvis")) {
+    activated = true;
+    speak("Yes, sir.");
+    status.innerText = "Listening...";
+    return;
+  }
 
-    // Speech Response
-    function speak(text) {
-      const speech = new SpeechSynthesisUtterance(text);
-      speech.lang = "en-US";
-      speech.pitch = 0.9;
-      speech.rate = 1;
+  // Command mode
+  if (activated) {
+    handleCommand(transcript);
+    activated = false;
+    status.innerText = "Waiting for 'Hey Jarvis'...";
+  }
+};
 
-      window.speechSynthesis.speak(speech);
-    }
-  </script>
+recognition.onerror = (event) => {
+  console.error("Error:", event.error);
+};
+
+// 🔁 Restart if it stops
+recognition.onend = () => {
+  recognition.start();
+};
+
+recognition.start();
+
+// 🧠 Command handler
+function handleCommand(command) {
+
+  // OPEN WEBSITES
+  if (command.includes("open youtube")) {
+    speak("Opening YouTube.");
+    window.open("https://www.youtube.com", "_blank");
+  }
+
+  else if (command.includes("open google")) {
+    speak("Opening Google.");
+    window.open("https://www.google.com", "_blank");
+  }
+
+  else if (command.includes("open spotify")) {
+    speak("Opening Spotify.");
+    window.open("https://open.spotify.com", "_blank");
+  }
+
+  // TIME
+  else if (command.includes("time")) {
+    const time = new Date().toLocaleTimeString();
+    speak("The time is " + time);
+  }
+
+  // DATE
+  else if (command.includes("date")) {
+    const date = new Date().toLocaleDateString();
+    speak("Today is " + date);
+  }
+
+  // GREETINGS
+  else if (command.includes("how are you")) {
+    speak("I am operating at full capacity, sir.");
+  }
+
+  else if (command.includes("who are you")) {
+    speak("I am Jarvis, your personal assistant.");
+  }
+
+  // FALLBACK AI
+  else {
+    speak(getAIResponse(command));
+  }
+}
+
+// 🤖 Simple AI brain
+function getAIResponse(input) {
+
+  if (input.includes("hello")) {
+    return "Hello, sir.";
+  }
+
+  if (input.includes("your name")) {
+    return "My name is Jarvis.";
+  }
+
+  if (input.includes("help")) {
+    return "I can open websites and answer simple questions.";
+  }
+
+  return "I am still learning, sir.";
+}
+
+// 🔊 Voice system
+function speak(text) {
+  const speech = new SpeechSynthesisUtterance(text);
+
+  const voices = window.speechSynthesis.getVoices();
+
+  // Prøv å finne en mer "Jarvis" stemme
+  const preferredVoice =
+    voices.find(v => v.name.includes("Google UK English Male")) ||
+    voices.find(v => v.lang === "en-GB") ||
+    voices[0];
+
+  if (preferredVoice) {
+    speech.voice = preferredVoice;
+  }
+
+  speech.pitch = 0.85;
+  speech.rate = 0.95;
+
+  window.speechSynthesis.speak(speech);
+}
+</script>
 
 </body>
 </html>
