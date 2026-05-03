@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Jarvis</title>
+  <style>
+    body {
+      background: radial-gradient(circle, #001f3f, #000814);
+      color: #00d4ff;
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding-top: 100px;
+    }
+
+```
+h1 {
+  font-size: 50px;
+  text-shadow: 0 0 20px #00d4ff;
+}
+
+#status {
+  margin-top: 20px;
+  font-size: 20px;
+  opacity: 0.8;
+}
+
+.circle {
+  width: 200px;
+  height: 200px;
+  border: 4px solid #00d4ff;
+  border-radius: 50%;
+  margin: 50px auto;
+  box-shadow: 0 0 40px #00d4ff;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); box-shadow: 0 0 20px #00d4ff; }
+  50% { transform: scale(1.1); box-shadow: 0 0 60px #00d4ff; }
+  100% { transform: scale(1); box-shadow: 0 0 20px #00d4ff; }
+}
+```
+
+  </style>
+</head>
+<body>
+
+  <h1>JARVIS</h1>
+  <div class="circle"></div>
+  <div id="status">Listening...</div>
+
+  <script>
+    const status = document.getElementById("status");
+
+    // Speech Recognition
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const recognition = new SpeechRecognition();
+
+    recognition.continuous = true;
+    recognition.lang = "en-US";
+
+    recognition.onstart = () => {
+      status.innerText = "Jarvis is listening...";
+    };
+
+    recognition.onresult = (event) => {
+      const transcript = event.results[event.results.length - 1][0].transcript.toLowerCase();
+      console.log("Heard:", transcript);
+
+      if (transcript.includes("hey jarvis")) {
+        speak("At your service, sir.");
+      }
+    };
+
+    recognition.onerror = (event) => {
+      console.error(event.error);
+    };
+
+    recognition.start();
+
+    // Speech Response
+    function speak(text) {
+      const speech = new SpeechSynthesisUtterance(text);
+      speech.lang = "en-US";
+      speech.pitch = 0.9;
+      speech.rate = 1;
+
+      window.speechSynthesis.speak(speech);
+    }
+  </script>
+
+</body>
+</html>
